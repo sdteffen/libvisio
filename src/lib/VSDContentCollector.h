@@ -85,7 +85,7 @@ public:
   void collectLineTo(unsigned id, unsigned level, double x, double y);
   void collectArcTo(unsigned id, unsigned level, double x2, double y2, double bow);
   void collectNURBSTo(unsigned id, unsigned level, double x2, double y2, unsigned char xType, unsigned char yType, unsigned degree,
-                      std::vector<std::pair<double, double> > controlPoints, std::vector<double> knotVector, std::vector<double> weights);
+                      const std::vector<std::pair<double, double> > &ctrlPnts, const std::vector<double> &kntVec, const std::vector<double> &weights);
   void collectNURBSTo(unsigned id, unsigned level, double x2, double y2, double knot, double knotPrev, double weight, double weightPrev, unsigned dataID);
   void collectNURBSTo(unsigned id, unsigned level, double x2, double y2, double knot, double knotPrev, double weight, double weightPrev, const NURBSData &data);
   void collectPolylineTo(unsigned id, unsigned level, double x, double y, unsigned char xType, unsigned char yType,
@@ -219,6 +219,16 @@ private:
   void _convertDataToString(WPXString &result, const WPXBinaryData &data, TextFormat format);
   bool parseFormatId( const char *formatString, unsigned short &result );
   void _appendField(WPXString &text);
+
+  // NURBS processing functions
+  bool _isUniform(const std::vector<double> &weights) const;
+  void _generatePolylineFromNURBS(unsigned degree, const std::vector<std::pair<double, double> > &controlPoints,
+                                  const std::vector<double> &knotVector, const std::vector<double> &weights);
+  void _generateBezierSegmentsFromNURBS(unsigned degree, const std::vector<std::pair<double, double> > &controlPoints,
+                                        const std::vector<double> &knotVector);
+  void _outputCubicBezierSegment(const std::vector<std::pair<double, double> > &points);
+  void _outputQuadraticBezierSegment(const std::vector<std::pair<double, double> > &points);
+  void _outputLinearBezierSegment(const std::vector<std::pair<double, double> > &points);
 
   bool m_isPageStarted;
   double m_pageWidth;

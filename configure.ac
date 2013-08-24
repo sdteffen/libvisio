@@ -7,7 +7,7 @@ AC_PREREQ([2.65])
 # ====================
 m4_define([libvisio_version_major],[0])
 m4_define([libvisio_version_minor],[0])
-m4_define([libvisio_version_micro],[28])
+m4_define([libvisio_version_micro],[30])
 m4_define([libvisio_version],[libvisio_version_major.libvisio_version_minor.libvisio_version_micro])
 
 # =============
@@ -58,8 +58,8 @@ AC_SUBST(GPERF)
 # Find additional apps
 # ====================
 PKG_CHECK_MODULES([WPD],[
-	libwpd-0.9
-	libwpd-stream-0.9
+	libwpd-0.9 >= 0.9.5
+	libwpd-stream-0.9 >= 0.9.5
 ])
 
 PKG_CHECK_MODULES([WPG],[
@@ -109,11 +109,12 @@ AC_SUBST(ZLIB_LIBS)
 
 AC_CHECK_HEADERS(
 	boost/algorithm/string.hpp \
-	boost/optional.hpp \
-	boost/spirit/include/classic.hpp \
 	boost/archive/iterators/binary_from_base64.hpp \
 	boost/archive/iterators/remove_whitespace.hpp \
-	boost/archive/iterators/transform_width.hpp,
+	boost/archive/iterators/transform_width.hpp \
+	boost/optional.hpp \
+	boost/range/iterator_range.hpp \
+	boost/spirit/include/classic.hpp,
 	[],
 	[AC_MSG_ERROR(Required boost headers not found. install boost >= 1.36)],
 	[]

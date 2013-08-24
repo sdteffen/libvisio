@@ -168,6 +168,14 @@ void libvisio::VSDXMLParserBase::readGeometry(xmlTextReaderPtr reader)
       if (XML_READER_TYPE_ELEMENT == tokenType)
         readRelQuadBezTo(reader);
       break;
+    case XML_SPLINESTART:
+      if (XML_READER_TYPE_ELEMENT == tokenType)
+        readSplineStart(reader);
+      break;
+    case XML_SPLINEKNOT:
+      if (XML_READER_TYPE_ELEMENT == tokenType)
+        readSplineKnot(reader);
+      break;
     default:
       break;
     }
@@ -1359,24 +1367,6 @@ void libvisio::VSDXMLParserBase::readCharIX(xmlTextReaderPtr reader)
       if (XML_READER_TYPE_ELEMENT == tokenType)
         readBoolData(doublestrikeout, reader);
       break;
-    case XML_RTLTEXT:
-      break;
-    case XML_USEVERTICAL:
-      break;
-    case XML_LETTERSPACE:
-      break;
-    case XML_COLORTRANS:
-      break;
-    case XML_ASIANFONT:
-      break;
-    case XML_COMPLEXSCRIPTFONT:
-      break;
-    case XML_LOCALIZEFONT:
-      break;
-    case XML_COMPLEXSCRIPTSIZE:
-      break;
-    case XML_LANGID:
-      break;
     default:
       break;
     }
@@ -1462,16 +1452,6 @@ void libvisio::VSDXMLParserBase::readParaIX(xmlTextReaderPtr reader)
     case XML_HORZALIGN:
       if (XML_READER_TYPE_ELEMENT == tokenType)
         ret = readByteData(align, reader);
-      break;
-    case XML_BULLET:
-      break;
-    case XML_BULLETSTR:
-      break;
-    case XML_BULLETFONT:
-      break;
-    case XML_BULLETFONTSIZE:
-      break;
-    case XML_TEXTPOSAFTERBULLET:
       break;
     case XML_FLAGS:
       if (XML_READER_TYPE_ELEMENT == tokenType)
@@ -1589,7 +1569,7 @@ void libvisio::VSDXMLParserBase::readSplineStart(xmlTextReaderPtr reader)
       break;
     }
   }
-  while (((XML_ELLIPTICALARCTO != tokenId && XML_ROW != tokenId) || XML_READER_TYPE_END_ELEMENT != tokenType) && 1 == ret);
+  while (((XML_SPLINESTART != tokenId && XML_ROW != tokenId) || XML_READER_TYPE_END_ELEMENT != tokenType) && 1 == ret);
   if (ret == 1)
     m_currentGeometryList->addSplineStart(ix, level, x, y, a, b, c, d);
 }

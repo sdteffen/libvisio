@@ -67,7 +67,12 @@ std::string getRelationshipsForTarget(const char *target)
 
 
 libvisio::VSDXParser::VSDXParser(WPXInputStream *input, libwpg::WPGPaintInterface *painter)
-  : VSDXMLParserBase(), m_input(input), m_painter(painter), m_currentDepth(0), m_rels(0)
+  : VSDXMLParserBase(),
+    m_input(input),
+    m_painter(painter),
+    m_currentDepth(0),
+    m_rels(0),
+    m_currentTheme()
 {
   input->seek(0, WPX_SEEK_CUR);
   m_input = new VSDZipStream(input);
@@ -294,14 +299,8 @@ bool libvisio::VSDXParser::parseTheme(WPXInputStream *input, const char *name)
   WPXInputStream *stream = input->getDocumentOLEStream(name);
   if (!stream)
     return false;
-  WPXInputStream *relStream = input->getDocumentOLEStream(getRelationshipsForTarget(name).c_str());
-  input->seek(0, WPX_SEEK_SET);
-  VSDXRelationships rels(relStream);
-  if (relStream)
-    delete relStream;
-  rels.rebaseTargets(getTargetBaseDirectory(name).c_str());
 
-  processXmlDocument(stream, rels);
+  m_currentTheme.parse(stream);
 
   delete stream;
   return true;
@@ -649,13 +648,6 @@ void libvisio::VSDXParser::readPageSheetProperties(xmlTextReaderPtr reader)
       if (XML_READER_TYPE_ELEMENT == tokenType)
         ret = readDoubleData(drawingScale, reader);
       break;
-    case XML_DRAWINGSIZETYPE:
-    case XML_DRAWINGSCALETYPE:
-    case XML_INHIBITSNAP:
-    case XML_UIVISIBILITY:
-    case XML_SHDWTYPE:
-    case XML_SHDWOBLIQUEANGLE:
-    case XML_SHDWSCALEFACTOR:
     default:
       break;
     }
@@ -860,12 +852,6 @@ void libvisio::VSDXParser::readStyleProperties(xmlTextReaderPtr reader)
       if (XML_READER_TYPE_ELEMENT == tokenType)
         readCharacter(reader);
       break;
-    case XML_SHDWFOREGNDTRANS:
-    case XML_SHDWBKGNDTRANS:
-    case XML_SHAPESHDWTYPE:
-    case XML_SHAPESHDWOBLIQUEANGLE:
-    case XML_SHAPESHDWSCALEFACTOR:
-    case XML_TEXTBKGNDTRANS:
     default:
       break;
     }
@@ -1183,8 +1169,6 @@ void libvisio::VSDXParser::readShapeProperties(xmlTextReaderPtr reader)
     case XML_HIDETEXT:
       if (XML_READER_TYPE_ELEMENT == tokenType)
         ret = readBoolData(m_shape.m_misc.m_hideText, reader);
-      break;
-    case XML_RESIZEMODE:
       break;
     default:
       if (XML_SECTION == tokenClass && XML_READER_TYPE_ELEMENT == tokenType)
