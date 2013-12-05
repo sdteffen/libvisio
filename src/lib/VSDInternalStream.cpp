@@ -33,24 +33,8 @@
 #include "VSDInternalStream.h"
 
 
-VSDInternalStream::VSDInternalStream(const std::vector<unsigned char> &buffer) :
-  WPXInputStream(),
-  m_offset(0),
-  m_buffer(buffer)
-{
-}
-
-VSDInternalStream::VSDInternalStream(const unsigned char *buffer, size_t bufferLength) :
-  WPXInputStream(),
-  m_offset(0),
-  m_buffer(bufferLength)
-{
-  memcpy(&m_buffer[0], buffer, bufferLength);
-}
-
-
-VSDInternalStream::VSDInternalStream(WPXInputStream *input, unsigned long size, bool compressed) :
-  WPXInputStream(),
+VSDInternalStream::VSDInternalStream(librevenge::RVNGInputStream *input, unsigned long size, bool compressed) :
+  librevenge::RVNGInputStream(),
   m_offset(0),
   m_buffer()
 {
@@ -139,11 +123,11 @@ const unsigned char *VSDInternalStream::read(unsigned long numBytes, unsigned lo
   return &m_buffer[oldOffset];
 }
 
-int VSDInternalStream::seek(long offset, WPX_SEEK_TYPE seekType)
+int VSDInternalStream::seek(long offset, librevenge::RVNG_SEEK_TYPE seekType)
 {
-  if (seekType == WPX_SEEK_CUR)
+  if (seekType == librevenge::RVNG_SEEK_CUR)
     m_offset += offset;
-  else if (seekType == WPX_SEEK_SET)
+  else if (seekType == librevenge::RVNG_SEEK_SET)
     m_offset = offset;
 
   if (m_offset < 0)
@@ -165,7 +149,7 @@ long VSDInternalStream::tell()
   return m_offset;
 }
 
-bool VSDInternalStream::atEOS()
+bool VSDInternalStream::isEnd()
 {
   if ((long)m_offset >= (long)m_buffer.size())
     return true;

@@ -66,7 +66,7 @@ public:
   VSDCharacterList m_charList;
   VSDOptionalParaStyle m_paraStyle;
   VSDParagraphList m_paraList;
-  WPXBinaryData m_text;
+  librevenge::RVNGBinaryData m_text;
   std::map< unsigned, VSDName > m_names;
   TextFormat m_textFormat;
   std::map<unsigned, NURBSData> m_nurbsData;
@@ -104,7 +104,6 @@ public:
   {
     return m_stencils.size();
   }
-  void clear();
 private:
   std::map<unsigned, VSDStencil> m_stencils;
 };

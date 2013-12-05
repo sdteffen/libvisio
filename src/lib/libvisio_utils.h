@@ -66,8 +66,8 @@ typedef unsigned __int64 uint64_t;
 
 #endif /* _MSC_VER */
 
-#include <libwpd/libwpd.h>
-#include <libwpd-stream/libwpd-stream.h>
+#include <librevenge/librevenge.h>
+#include <librevenge-stream/librevenge-stream.h>
 
 // debug message includes source file and line number
 //#define VERBOSE_DEBUG 1
@@ -89,18 +89,16 @@ typedef unsigned __int64 uint64_t;
 namespace libvisio
 {
 
-uint8_t readU8(WPXInputStream *input);
-uint16_t readU16(WPXInputStream *input);
-int16_t readS16(WPXInputStream *input);
-uint32_t readU32(WPXInputStream *input);
-int32_t readS32(WPXInputStream *input);
-uint64_t readU64(WPXInputStream *input);
+uint8_t readU8(librevenge::RVNGInputStream *input);
+uint16_t readU16(librevenge::RVNGInputStream *input);
+int16_t readS16(librevenge::RVNGInputStream *input);
+uint32_t readU32(librevenge::RVNGInputStream *input);
+int32_t readS32(librevenge::RVNGInputStream *input);
+uint64_t readU64(librevenge::RVNGInputStream *input);
 
-double readDouble(WPXInputStream *input);
+double readDouble(librevenge::RVNGInputStream *input);
 
-void appendFromBase64(WPXBinaryData &data, const unsigned char *base64Data, size_t base64DataLength);
-
-const ::WPXString getColourString(const Colour &c);
+const librevenge::RVNGString getColourString(const Colour &c);
 
 class EndOfStreamException
 {

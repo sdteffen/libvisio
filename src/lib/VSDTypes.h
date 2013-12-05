@@ -32,7 +32,7 @@
 #define VSDTYPES_H
 
 #include <vector>
-#include <libwpd/libwpd.h>
+#include <librevenge/librevenge.h>
 
 #define FROM_OPTIONAL(t, u) !!t ? t.get() : u
 #define ASSIGN_OPTIONAL(t, u) if(!!t) u = t.get()
@@ -147,7 +147,7 @@ struct ForeignData
   double offsetY;
   double width;
   double height;
-  WPXBinaryData data;
+  librevenge::RVNGBinaryData data;
   ForeignData()
     : typeId(0),
       dataId(0),
@@ -184,7 +184,7 @@ enum TextFormat
 class VSDName
 {
 public:
-  VSDName(const WPXBinaryData &data, TextFormat format)
+  VSDName(const librevenge::RVNGBinaryData &data, TextFormat format)
     : m_data(data),
       m_format(format) {}
   VSDName() : m_data(), m_format(VSD_TEXT_ANSI) {}
@@ -193,16 +193,16 @@ public:
   {
     return !m_data.size();
   }
-  WPXBinaryData m_data;
+  librevenge::RVNGBinaryData m_data;
   TextFormat m_format;
 };
 
 struct VSDFont
 {
-  WPXString m_name;
+  librevenge::RVNGString m_name;
   TextFormat m_encoding;
   VSDFont() : m_name("Arial"), m_encoding(libvisio::VSD_TEXT_ANSI) {}
-  VSDFont(const WPXString &name, const TextFormat &encoding) :
+  VSDFont(const librevenge::RVNGString &name, const TextFormat &encoding) :
     m_name(name), m_encoding(encoding) {}
   VSDFont(const VSDFont &font) :
     m_name(font.m_name), m_encoding(font.m_encoding) {}

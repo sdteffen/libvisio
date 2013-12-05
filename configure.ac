@@ -6,8 +6,8 @@ AC_PREREQ([2.65])
 # Version informations
 # ====================
 m4_define([libvisio_version_major],[0])
-m4_define([libvisio_version_minor],[0])
-m4_define([libvisio_version_micro],[31])
+m4_define([libvisio_version_minor],[1])
+m4_define([libvisio_version_micro],[0])
 m4_define([libvisio_version],[libvisio_version_major.libvisio_version_minor.libvisio_version_micro])
 
 # =============
@@ -57,13 +57,8 @@ AC_SUBST(GPERF)
 # ====================
 # Find additional apps
 # ====================
-PKG_CHECK_MODULES([WPD],[
-	libwpd-0.9 >= 0.9.5
-	libwpd-stream-0.9 >= 0.9.5
-])
-
-PKG_CHECK_MODULES([WPG],[
-	libwpg-0.2
+PKG_CHECK_MODULES([REVENGE],[
+	librevenge-0.0
 ])
 
 PKG_CHECK_MODULES([LIBXML],[
@@ -109,16 +104,34 @@ AC_SUBST(ZLIB_LIBS)
 
 AC_CHECK_HEADERS(
 	boost/algorithm/string.hpp \
-	boost/archive/iterators/binary_from_base64.hpp \
-	boost/archive/iterators/remove_whitespace.hpp \
-	boost/archive/iterators/transform_width.hpp \
 	boost/optional.hpp \
-	boost/range/iterator_range.hpp \
 	boost/spirit/include/classic.hpp,
 	[],
 	[AC_MSG_ERROR(Required boost headers not found. install boost >= 1.36)],
 	[]
 )
+
+# =====
+# Tools
+# =====
+AC_ARG_ENABLE([tools],
+	[AS_HELP_STRING([--disable-tools], [Build conversion tools])],
+	[enable_tools="$enableval"],
+	[enable_tools=yes]
+)
+AS_IF([test "x$enable_tools" = "xyes"], [
+	PKG_CHECK_MODULES([REVENGE_GENERATORS],[
+		librevenge-generators-0.0
+	])
+	PKG_CHECK_MODULES([REVENGE_STREAM],[
+		librevenge-stream-0.0
+	])
+])
+AC_SUBST([REVENGE_GENERATORS_CFLAGS])
+AC_SUBST([REVENGE_GENERATORS_LIBS])
+AC_SUBST([REVENGE_STREAM_CFLAGS])
+AC_SUBST([REVENGE_STREAM_LIBS])
+AM_CONDITIONAL(BUILD_TOOLS, [test "x$enable_tools" = "xyes"])
 
 # =================================
 # Libtool/Version Makefile settings
@@ -251,8 +264,8 @@ AS_IF([test "x$native_win32" = "xyes"], [
 		CXXFLAGS="$CXXFLAGS -Wall -Wextra -Wshadow -pedantic"
 	])
 ])
-LIBVISIO_CXXFLAGS="${WPD_CFLAGS} ${WPG_CFLAGS} ${LIBXML_CFLAGS} ${ZLIB_CFLAGS} ${ICU_CFLAGS}"
-LIBVISIO_LIBS="${WPD_LIBS} ${WPG_LIBS} ${LIBXML_LIBS} ${ZLIB_LIBS} ${ICU_LIBS}"
+LIBVISIO_CXXFLAGS="${REVENGE_CFLAGS} ${LIBXML_CFLAGS} ${ZLIB_CFLAGS} ${ICU_CFLAGS}"
+LIBVISIO_LIBS="${REVENGE_LIBS} ${LIBXML_LIBS} ${ZLIB_LIBS} ${ICU_LIBS}"
 AC_SUBST(LIBVISIO_CXXFLAGS)
 AC_SUBST(LIBVISIO_LIBS)
 
@@ -272,21 +285,6 @@ AS_IF([test "x$enable_debug" = "xyes"], [
 	DEBUG_CXXFLAGS="-DNDEBUG"
 ])
 AC_SUBST(DEBUG_CXXFLAGS)
-
-# ============
-# Static tools
-# ============
-AC_ARG_ENABLE([static-tools],
-	[AS_HELP_STRING([--enable-static-tools], [Link tools (binaries) statically])],
-	[enable_static_tools="$enableval"],
-	[enable_static_tools=no]
-)
-AS_IF([test "x$enable_static_tools" = "xyes"], [
-	enable_static="yes"
-], [
-	AC_DISABLE_STATIC
-])
-AM_CONDITIONAL(STATIC_TOOLS, [test "x$enable_static_tools" = "xyes"])
 
 # =============
 # Documentation
@@ -331,8 +329,6 @@ build/win32/Makefile
 docs/Makefile
 docs/doxygen/Makefile
 libvisio-$VSD_MAJOR_VERSION.$VSD_MINOR_VERSION.pc:libvisio.pc.in
-libvisio.spec
-libvisio-zip
 ])
 AC_OUTPUT
 
@@ -344,7 +340,7 @@ AC_MSG_NOTICE([
 Build configuration:
 	debug:           ${enable_debug}
 	docs:            ${build_docs}
-	static-tools:    ${enable_static_tools}
+	tools:           ${enable_tools}
 	werror:          ${enable_werror}
 ==============================================================================
 ])

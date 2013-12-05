@@ -30,14 +30,13 @@
 #include <string.h>
 #include <libxml/xmlIO.h>
 #include <libxml/xmlstring.h>
-#include <libwpd-stream/libwpd-stream.h>
+#include <librevenge-stream/librevenge-stream.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/spirit/include/classic.hpp>
 #include "VSDXMLParserBase.h"
 #include "libvisio_utils.h"
 #include "VSDContentCollector.h"
 #include "VSDStylesCollector.h"
-#include "VSDZipStream.h"
 #include "VSDXMLHelper.h"
 #include "VSDXMLTokenMap.h"
 
@@ -1110,11 +1109,11 @@ void libvisio::VSDXMLParserBase::readPage(xmlTextReaderPtr reader)
   if (id)
   {
     unsigned nId = (unsigned)xmlStringToLong(id);
-    unsigned backgroundPageID =  (unsigned)(bgndPage ? xmlStringToLong(bgndPage) : -1);
+    unsigned backgroundPageID = (unsigned)(bgndPage ? xmlStringToLong(bgndPage) : -1);
     bool isBackgroundPage = background ? xmlStringToBool(background) : false;
     m_isPageStarted = true;
     m_collector->startPage(nId);
-    m_collector->collectPage(nId, (unsigned)getElementDepth(reader), backgroundPageID, isBackgroundPage, pageName ? VSDName(WPXBinaryData(pageName, xmlStrlen(pageName)), VSD_TEXT_UTF8) : VSDName());
+    m_collector->collectPage(nId, (unsigned)getElementDepth(reader), backgroundPageID, isBackgroundPage, pageName ? VSDName(librevenge::RVNGBinaryData(pageName, xmlStrlen(pageName)), VSD_TEXT_UTF8) : VSDName());
   }
   if (id)
     xmlFree(id);
@@ -1161,7 +1160,7 @@ void libvisio::VSDXMLParserBase::readText(xmlTextReaderPtr reader)
     default:
       if (XML_READER_TYPE_TEXT == tokenType || XML_READER_TYPE_SIGNIFICANT_WHITESPACE == tokenType)
       {
-        WPXBinaryData tmpText;
+        librevenge::RVNGBinaryData tmpText;
         const unsigned char *tmpBuffer = xmlTextReaderConstValue(reader);
         int tmpLength = xmlStrlen(tmpBuffer);
         for (int i = 0; i < tmpLength && tmpBuffer[i]; ++i)
@@ -1263,11 +1262,11 @@ void libvisio::VSDXMLParserBase::readCharIX(xmlTextReaderPtr reader)
             if (iter != m_fonts.end())
               font = iter->second;
             else
-              font = VSDName(WPXBinaryData(stringValue, xmlStrlen(stringValue)), VSD_TEXT_UTF8);
+              font = VSDName(librevenge::RVNGBinaryData(stringValue, xmlStrlen(stringValue)), VSD_TEXT_UTF8);
           }
           catch (const XmlParserException &)
           {
-            font = VSDName(WPXBinaryData(stringValue, xmlStrlen(stringValue)), VSD_TEXT_UTF8);
+            font = VSDName(librevenge::RVNGBinaryData(stringValue, xmlStrlen(stringValue)), VSD_TEXT_UTF8);
           }
         }
         if (stringValue)
@@ -1486,7 +1485,7 @@ void libvisio::VSDXMLParserBase::readStyleSheet(xmlTextReaderPtr reader)
   if (id)
   {
     unsigned nId = (unsigned)xmlStringToLong(id);
-    unsigned nLineStyle =  (unsigned)(lineStyle ? xmlStringToLong(lineStyle) : -1);
+    unsigned nLineStyle = (unsigned)(lineStyle ? xmlStringToLong(lineStyle) : -1);
     unsigned nFillStyle = (unsigned)(fillStyle ? xmlStringToLong(fillStyle) : -1);
     unsigned nTextStyle = (unsigned)(textStyle ? xmlStringToLong(textStyle) : -1);
     m_collector->collectStyleSheet(nId, (unsigned)getElementDepth(reader), nLineStyle, nFillStyle, nTextStyle);
@@ -1928,7 +1927,7 @@ int libvisio::VSDXMLParserBase::readNURBSData(boost::optional<NURBSData> &data, 
                          real_p[assign_a(point.second)])[push_back_a(tmpData.points,point)]
                         >> (',' | eps_p) >>
                         real_p[push_back_a(tmpData.knots)] >> (',' | eps_p) >>
-                        real_p[push_back_a(tmpData.weights)]), ',' | eps_p ))
+                        real_p[push_back_a(tmpData.weights)]), ',' | eps_p))
                  ) >> ')' >> end_p,
                  //  End grammar
                  space_p).full;
@@ -1936,7 +1935,7 @@ int libvisio::VSDXMLParserBase::readNURBSData(boost::optional<NURBSData> &data, 
     xmlFree(formula);
   }
 
-  if( !bRes )
+  if (!bRes)
     return -1;
   data = tmpData;
   return 1;
@@ -1966,7 +1965,7 @@ int libvisio::VSDXMLParserBase::readPolylineData(boost::optional<PolylineData> &
                    (list_p(
                       (
                         (real_p[assign_a(point.first)] >> (',' | eps_p) >>
-                         real_p[assign_a(point.second)])[push_back_a(tmpData.points,point)]), ',' | eps_p ))
+                         real_p[assign_a(point.second)])[push_back_a(tmpData.points,point)]), ',' | eps_p))
                  ) >> ')' >> end_p,
                  //  End grammar
                  space_p).full;
@@ -1974,7 +1973,7 @@ int libvisio::VSDXMLParserBase::readPolylineData(boost::optional<PolylineData> &
     xmlFree(formula);
   }
 
-  if( !bRes )
+  if (!bRes)
     return -1;
   data = tmpData;
   return 1;
@@ -2089,31 +2088,6 @@ int libvisio::VSDXMLParserBase::readByteData(boost::optional<unsigned char> &val
   if (!!tmpValue)
     value = (unsigned char) tmpValue.get();
   return ret;
-}
-
-int libvisio::VSDXMLParserBase::readColourData(Colour &value, xmlTextReaderPtr reader)
-{
-  xmlChar *stringValue = readStringData(reader);
-  if (stringValue)
-  {
-    VSD_DEBUG_MSG(("VSDXMLParserBase::readColourData stringValue %s\n", (const char *)stringValue));
-    if (!xmlStrEqual(stringValue, BAD_CAST("Themed")))
-    {
-      try
-      {
-        Colour tmpColour = xmlStringToColour(stringValue);
-        value = tmpColour;
-      }
-      catch (const XmlParserException &)
-      {
-        xmlFree(stringValue);
-        throw XmlParserException();
-      }
-    }
-    xmlFree(stringValue);
-    return 1;
-  }
-  return -1;
 }
 
 int libvisio::VSDXMLParserBase::readExtendedColourData(Colour &value, long &idx, xmlTextReaderPtr reader)

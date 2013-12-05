@@ -5,21 +5,24 @@ version_info = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)
 endif
 
 lib_LTLIBRARIES = libvisio-@VSD_MAJOR_VERSION@.@VSD_MINOR_VERSION@.la
-noinst_LTLIBRARIES = libtokenmap.la
 libvisio_@VSD_MAJOR_VERSION@_@VSD_MINOR_VERSION@_includedir = $(includedir)/libvisio-@VSD_MAJOR_VERSION@.@VSD_MINOR_VERSION@/libvisio
 libvisio_@VSD_MAJOR_VERSION@_@VSD_MINOR_VERSION@_include_HEADERS = \
 	$(top_srcdir)/inc/libvisio/libvisio.h \
-	$(top_srcdir)/inc/libvisio/VSDStringVector.h \
 	$(top_srcdir)/inc/libvisio/VisioDocument.h
 
-AM_CXXFLAGS = -I$(top_srcdir)/inc -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib $(LIBVISIO_CXXFLAGS) $(DEBUG_CXXFLAGS)
+AM_CXXFLAGS = \
+	-I$(top_srcdir)/inc \
+	-I$(top_srcdir)/src/lib \
+	-I$(top_builddir)/src/lib \
+	$(LIBVISIO_CXXFLAGS) \
+	$(DEBUG_CXXFLAGS)
 
 generated_files = \
 	$(top_builddir)/src/lib/tokens.h \
 	$(top_builddir)/src/lib/tokenhash.h
 
-libvisio_@VSD_MAJOR_VERSION@_@VSD_MINOR_VERSION@_la_LIBADD  = libtokenmap.la $(LIBVISIO_LIBS) @LIBVISIO_WIN32_RESOURCE@
-libvisio_@VSD_MAJOR_VERSION@_@VSD_MINOR_VERSION@_la_DEPENDENCIES = @LIBVISIO_WIN32_RESOURCE@ libtokenmap.la
+libvisio_@VSD_MAJOR_VERSION@_@VSD_MINOR_VERSION@_la_LIBADD  = $(LIBVISIO_LIBS) @LIBVISIO_WIN32_RESOURCE@
+libvisio_@VSD_MAJOR_VERSION@_@VSD_MINOR_VERSION@_la_DEPENDENCIES = @LIBVISIO_WIN32_RESOURCE@
 libvisio_@VSD_MAJOR_VERSION@_@VSD_MINOR_VERSION@_la_LDFLAGS = $(version_info) -export-dynamic -no-undefined
 libvisio_@VSD_MAJOR_VERSION@_@VSD_MINOR_VERSION@_la_SOURCES = \
 	libvisio_utils.cpp \
@@ -27,7 +30,6 @@ libvisio_@VSD_MAJOR_VERSION@_@VSD_MINOR_VERSION@_la_SOURCES = \
 	VSD5Parser.cpp \
 	VSD6Parser.cpp \
 	VSDInternalStream.cpp \
-	VSDSVGGenerator.cpp \
 	VSDCharacterList.cpp \
 	VSDContentCollector.cpp \
 	VSDFieldList.cpp \
@@ -38,16 +40,13 @@ libvisio_@VSD_MAJOR_VERSION@_@VSD_MINOR_VERSION@_la_SOURCES = \
 	VSDParser.cpp \
 	VSDShapeList.cpp \
 	VSDStencils.cpp \
-	VSDStringVector.cpp \
 	VSDStyles.cpp \
 	VSDStylesCollector.cpp \
 	VSDXMLHelper.cpp \
-	VSDZipStream.cpp \
 	libvisio_utils.h \
 	VSD5Parser.h \
 	VSD6Parser.h \
 	VSDInternalStream.h \
-	VSDSVGGenerator.h \
 	VSDCharacterList.h \
 	VSDCollector.h \
 	VSDContentCollector.h \
@@ -64,9 +63,7 @@ libvisio_@VSD_MAJOR_VERSION@_@VSD_MINOR_VERSION@_la_SOURCES = \
 	VSDStylesCollector.h \
 	VSDTypes.h \
 	VSDXMLHelper.h \
-	VSDZipStream.h
-
-libtokenmap_la_SOURCES = \
+	 \
 	VDXParser.cpp \
 	VDXParser.h \
 	VSDXMLParserBase.cpp \
@@ -80,7 +77,11 @@ libtokenmap_la_SOURCES = \
 	$(generated_files)
 	
 
-$(libtokenmap_la_OBJECTS) : $(generated_files)
+VDXParser.lo : $(generated_files)
+VSDXMLParserBase.lo : $(generated_files)
+VSDXMLTokenMap.lo : $(generated_files)
+VSDXParser.lo : $(generated_files)
+VSDXTheme.lo : $(generated_files)
 
 $(top_builddir)/src/lib/tokens.h : $(top_builddir)/src/lib/tokens.gperf
 
@@ -106,8 +107,7 @@ distclean-local :
 EXTRA_DIST = \
 	tokens.txt \
     gentoken.pl \
-	libvisio.rc.in \
-	makefile.mk
+	libvisio.rc.in
 
 # These may be in the builddir too
 BUILD_EXTRA_DIST = \

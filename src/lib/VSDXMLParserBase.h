@@ -69,7 +69,7 @@ protected:
   std::map<unsigned, Colour> m_colours;
   VSDFieldList m_fieldList;
   VSDShapeList m_shapeList;
-  WPXBinaryData m_currentBinaryData;
+  librevenge::RVNGBinaryData m_currentBinaryData;
   std::stack<VSDShape> m_shapeStack;
   std::stack<unsigned> m_shapeLevelStack;
   bool m_isShapeStarted;
@@ -90,7 +90,6 @@ protected:
   int readDoubleData(double &value, xmlTextReaderPtr reader);
   int readBoolData(boost::optional<bool> &value, xmlTextReaderPtr reader);
   int readBoolData(bool &value, xmlTextReaderPtr reader);
-  int readColourData(Colour &value, xmlTextReaderPtr reader);
   int readExtendedColourData(Colour &value, long &idx, xmlTextReaderPtr reader);
   int readExtendedColourData(Colour &value, xmlTextReaderPtr reader);
   int readExtendedColourData(boost::optional<Colour> &value, xmlTextReaderPtr reader);

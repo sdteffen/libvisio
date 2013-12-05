@@ -33,8 +33,7 @@
 
 #include <stdio.h>
 #include <iostream>
-#include <libwpd/libwpd.h>
-#include <libwpg/libwpg.h>
+#include <librevenge/librevenge.h>
 #include "VSD6Parser.h"
 #include "VSDInternalStream.h"
 
@@ -44,46 +43,46 @@ namespace libvisio
 class VSD5Parser : public VSD6Parser
 {
 public:
-  explicit VSD5Parser(WPXInputStream *input, libwpg::WPGPaintInterface *painter);
+  explicit VSD5Parser(librevenge::RVNGInputStream *input, librevenge::RVNGDrawingInterface *painter);
   ~VSD5Parser();
 
 protected:
-  virtual void readPointer(WPXInputStream *input, Pointer &ptr);
-  virtual bool getChunkHeader(WPXInputStream *input);
-  virtual void readPointerInfo(WPXInputStream *input, unsigned ptrType, unsigned shift, unsigned &listSize, int &pointerCount);
+  virtual void readPointer(librevenge::RVNGInputStream *input, Pointer &ptr);
+  virtual bool getChunkHeader(librevenge::RVNGInputStream *input);
+  virtual void readPointerInfo(librevenge::RVNGInputStream *input, unsigned ptrType, unsigned shift, unsigned &listSize, int &pointerCount);
 
-  virtual void readGeomList(WPXInputStream *input);
-  virtual void readCharList(WPXInputStream *input);
-  virtual void readParaList(WPXInputStream *input);
-  virtual void readShapeList(WPXInputStream *input);
-  virtual void readPropList(WPXInputStream *input);
-  virtual void readFieldList(WPXInputStream *input);
-  virtual void readNameList2(WPXInputStream *input);
+  virtual void readGeomList(librevenge::RVNGInputStream *input);
+  virtual void readCharList(librevenge::RVNGInputStream *input);
+  virtual void readParaList(librevenge::RVNGInputStream *input);
+  virtual void readShapeList(librevenge::RVNGInputStream *input);
+  virtual void readPropList(librevenge::RVNGInputStream *input);
+  virtual void readFieldList(librevenge::RVNGInputStream *input);
+  virtual void readNameList2(librevenge::RVNGInputStream *input);
 
-  virtual void readLine(WPXInputStream *input);
-  virtual void readFillAndShadow(WPXInputStream *input);
-  virtual void readTextBlock(WPXInputStream *input);
-  virtual void readCharIX(WPXInputStream *input);
-  virtual void readTextField(WPXInputStream *input);
+  virtual void readLine(librevenge::RVNGInputStream *input);
+  virtual void readFillAndShadow(librevenge::RVNGInputStream *input);
+  virtual void readTextBlock(librevenge::RVNGInputStream *input);
+  virtual void readCharIX(librevenge::RVNGInputStream *input);
+  virtual void readTextField(librevenge::RVNGInputStream *input);
 
-  virtual void readShape(WPXInputStream *input);
-  virtual void readPage(WPXInputStream *input);
+  virtual void readShape(librevenge::RVNGInputStream *input);
+  virtual void readPage(librevenge::RVNGInputStream *input);
 
-  virtual void handleChunkRecords(WPXInputStream *input);
+  virtual void handleChunkRecords(librevenge::RVNGInputStream *input);
 
-  virtual void readStyleSheet(WPXInputStream *input);
+  virtual void readStyleSheet(librevenge::RVNGInputStream *input);
 
-  virtual void readNameIDX(WPXInputStream *input);
+  virtual void readNameIDX(librevenge::RVNGInputStream *input);
 
-  virtual unsigned getUInt(WPXInputStream *input);
-  virtual int getInt(WPXInputStream *input);
+  virtual unsigned getUInt(librevenge::RVNGInputStream *input);
+  virtual int getInt(librevenge::RVNGInputStream *input);
 
 private:
   VSD5Parser();
   VSD5Parser(const VSDParser &);
   VSD5Parser &operator=(const VSDParser &);
 
-  void readList(WPXInputStream *input);
+  void readList(librevenge::RVNGInputStream *input);
 };
 
 } // namespace libvisio

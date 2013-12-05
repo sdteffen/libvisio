@@ -33,12 +33,96 @@
 namespace libvisio
 {
 
+namespace
+{
+
+static void separateTabsAndInsertText(librevenge::RVNGDrawingInterface *iface, const librevenge::RVNGString &text)
+{
+  if (!iface || text.empty())
+    return;
+  librevenge::RVNGString tmpText;
+  librevenge::RVNGString::Iter i(text);
+  for (i.rewind(); i.next();)
+  {
+    if (*(i()) == '\t')
+    {
+      if (!tmpText.empty())
+      {
+        if (iface)
+          iface->insertText(tmpText);
+        tmpText.clear();
+      }
+
+      if (iface)
+        iface->insertTab();
+    }
+    else if (*(i()) == '\n')
+    {
+      if (!tmpText.empty())
+      {
+        if (iface)
+          iface->insertText(tmpText);
+        tmpText.clear();
+      }
+
+      if (iface)
+        iface->insertLineBreak();
+    }
+    else
+    {
+      tmpText.append(i());
+    }
+  }
+  if (iface && !tmpText.empty())
+    iface->insertText(tmpText);
+}
+
+static void separateSpacesAndInsertText(librevenge::RVNGDrawingInterface *iface, const librevenge::RVNGString &text)
+{
+  if (!iface)
+    return;
+  if (text.empty())
+  {
+    iface->insertText(text);
+    return;
+  }
+  librevenge::RVNGString tmpText;
+  int numConsecutiveSpaces = 0;
+  librevenge::RVNGString::Iter i(text);
+  for (i.rewind(); i.next();)
+  {
+    if (*(i()) == ' ')
+      numConsecutiveSpaces++;
+    else
+      numConsecutiveSpaces = 0;
+
+    if (numConsecutiveSpaces > 1)
+    {
+      if (!tmpText.empty())
+      {
+        separateTabsAndInsertText(iface, tmpText);
+        tmpText.clear();
+      }
+
+      if (iface)
+        iface->insertSpace();
+    }
+    else
+    {
+      tmpText.append(i());
+    }
+  }
+  separateTabsAndInsertText(iface, tmpText);
+}
+
+} // anonymous namespace
+
 class VSDOutputElement
 {
 public:
   VSDOutputElement() {}
   virtual ~VSDOutputElement() {}
-  virtual void draw(libwpg::WPGPaintInterface *painter) = 0;
+  virtual void draw(librevenge::RVNGDrawingInterface *painter) = 0;
   virtual VSDOutputElement *clone() = 0;
 };
 
@@ -46,93 +130,90 @@ public:
 class VSDStyleOutputElement : public VSDOutputElement
 {
 public:
-  VSDStyleOutputElement(const WPXPropertyList &propList, const WPXPropertyListVector &propListVec);
+  VSDStyleOutputElement(const librevenge::RVNGPropertyList &propList);
   virtual ~VSDStyleOutputElement() {}
-  virtual void draw(libwpg::WPGPaintInterface *painter);
+  virtual void draw(librevenge::RVNGDrawingInterface *painter);
   virtual VSDOutputElement *clone()
   {
-    return new VSDStyleOutputElement(m_propList, m_propListVec);
+    return new VSDStyleOutputElement(m_propList);
   }
 private:
-  WPXPropertyList m_propList;
-  WPXPropertyListVector m_propListVec;
+  librevenge::RVNGPropertyList m_propList;
 };
 
 
 class VSDPathOutputElement : public VSDOutputElement
 {
 public:
-  VSDPathOutputElement(const WPXPropertyListVector &propListVec);
+  VSDPathOutputElement(const librevenge::RVNGPropertyList &propList);
   virtual ~VSDPathOutputElement() {}
-  virtual void draw(libwpg::WPGPaintInterface *painter);
+  virtual void draw(librevenge::RVNGDrawingInterface *painter);
   virtual VSDOutputElement *clone()
   {
-    return new VSDPathOutputElement(m_propListVec);
+    return new VSDPathOutputElement(m_propList);
   }
 private:
-  WPXPropertyListVector m_propListVec;
+  librevenge::RVNGPropertyList m_propList;
 };
 
 
 class VSDGraphicObjectOutputElement : public VSDOutputElement
 {
 public:
-  VSDGraphicObjectOutputElement(const WPXPropertyList &propList, const ::WPXBinaryData &binaryData);
+  VSDGraphicObjectOutputElement(const librevenge::RVNGPropertyList &propList);
   virtual ~VSDGraphicObjectOutputElement() {}
-  virtual void draw(libwpg::WPGPaintInterface *painter);
+  virtual void draw(librevenge::RVNGDrawingInterface *painter);
   virtual VSDOutputElement *clone()
   {
-    return new VSDGraphicObjectOutputElement(m_propList, m_binaryData);
+    return new VSDGraphicObjectOutputElement(m_propList);
   }
 private:
-  WPXPropertyList m_propList;
-  WPXBinaryData m_binaryData;
+  librevenge::RVNGPropertyList m_propList;
 };
 
 
 class VSDStartTextObjectOutputElement : public VSDOutputElement
 {
 public:
-  VSDStartTextObjectOutputElement(const WPXPropertyList &propList, const WPXPropertyListVector &propListVec);
+  VSDStartTextObjectOutputElement(const librevenge::RVNGPropertyList &propList);
   virtual ~VSDStartTextObjectOutputElement() {}
-  virtual void draw(libwpg::WPGPaintInterface *painter);
+  virtual void draw(librevenge::RVNGDrawingInterface *painter);
   virtual VSDOutputElement *clone()
   {
-    return new VSDStartTextObjectOutputElement(m_propList, m_propListVec);
+    return new VSDStartTextObjectOutputElement(m_propList);
   }
 private:
-  WPXPropertyList m_propList;
-  WPXPropertyListVector m_propListVec;
+  librevenge::RVNGPropertyList m_propList;
 };
 
 
-class VSDStartTextLineOutputElement : public VSDOutputElement
+class VSDOpenParagraphOutputElement : public VSDOutputElement
 {
 public:
-  VSDStartTextLineOutputElement(const WPXPropertyList &propList);
-  virtual ~VSDStartTextLineOutputElement() {}
-  virtual void draw(libwpg::WPGPaintInterface *painter);
+  VSDOpenParagraphOutputElement(const librevenge::RVNGPropertyList &propList);
+  virtual ~VSDOpenParagraphOutputElement() {}
+  virtual void draw(librevenge::RVNGDrawingInterface *painter);
   virtual VSDOutputElement *clone()
   {
-    return new VSDStartTextLineOutputElement(m_propList);
+    return new VSDOpenParagraphOutputElement(m_propList);
   }
 private:
-  WPXPropertyList m_propList;
+  librevenge::RVNGPropertyList m_propList;
 };
 
 
 class VSDStartLayerOutputElement : public VSDOutputElement
 {
 public:
-  VSDStartLayerOutputElement(const WPXPropertyList &propList);
+  VSDStartLayerOutputElement(const librevenge::RVNGPropertyList &propList);
   virtual ~VSDStartLayerOutputElement() {}
-  virtual void draw(libwpg::WPGPaintInterface *painter);
+  virtual void draw(librevenge::RVNGDrawingInterface *painter);
   virtual VSDOutputElement *clone()
   {
     return new VSDStartLayerOutputElement(m_propList);
   }
 private:
-  WPXPropertyList m_propList;
+  librevenge::RVNGPropertyList m_propList;
 };
 
 
@@ -141,7 +222,7 @@ class VSDEndLayerOutputElement : public VSDOutputElement
 public:
   VSDEndLayerOutputElement();
   virtual ~VSDEndLayerOutputElement() {}
-  virtual void draw(libwpg::WPGPaintInterface *painter);
+  virtual void draw(librevenge::RVNGDrawingInterface *painter);
   virtual VSDOutputElement *clone()
   {
     return new VSDEndLayerOutputElement();
@@ -149,58 +230,58 @@ public:
 };
 
 
-class VSDStartTextSpanOutputElement : public VSDOutputElement
+class VSDOpenSpanOutputElement : public VSDOutputElement
 {
 public:
-  VSDStartTextSpanOutputElement(const WPXPropertyList &propList);
-  virtual ~VSDStartTextSpanOutputElement() {}
-  virtual void draw(libwpg::WPGPaintInterface *painter);
+  VSDOpenSpanOutputElement(const librevenge::RVNGPropertyList &propList);
+  virtual ~VSDOpenSpanOutputElement() {}
+  virtual void draw(librevenge::RVNGDrawingInterface *painter);
   virtual VSDOutputElement *clone()
   {
-    return new VSDStartTextSpanOutputElement(m_propList);
+    return new VSDOpenSpanOutputElement(m_propList);
   }
 private:
-  WPXPropertyList m_propList;
+  librevenge::RVNGPropertyList m_propList;
 };
 
 
 class VSDInsertTextOutputElement : public VSDOutputElement
 {
 public:
-  VSDInsertTextOutputElement(const WPXString &text);
+  VSDInsertTextOutputElement(const librevenge::RVNGString &text);
   virtual ~VSDInsertTextOutputElement() {}
-  virtual void draw(libwpg::WPGPaintInterface *painter);
+  virtual void draw(librevenge::RVNGDrawingInterface *painter);
   virtual VSDOutputElement *clone()
   {
     return new VSDInsertTextOutputElement(m_text);
   }
 private:
-  WPXString m_text;
+  librevenge::RVNGString m_text;
 };
 
 
-class VSDEndTextSpanOutputElement : public VSDOutputElement
+class VSDCloseSpanOutputElement : public VSDOutputElement
 {
 public:
-  VSDEndTextSpanOutputElement();
-  virtual ~VSDEndTextSpanOutputElement() {}
-  virtual void draw(libwpg::WPGPaintInterface *painter);
+  VSDCloseSpanOutputElement();
+  virtual ~VSDCloseSpanOutputElement() {}
+  virtual void draw(librevenge::RVNGDrawingInterface *painter);
   virtual VSDOutputElement *clone()
   {
-    return new VSDEndTextSpanOutputElement();
+    return new VSDCloseSpanOutputElement();
   }
 };
 
 
-class VSDEndTextLineOutputElement : public VSDOutputElement
+class VSDCloseParagraphOutputElement : public VSDOutputElement
 {
 public:
-  VSDEndTextLineOutputElement();
-  virtual ~VSDEndTextLineOutputElement() {}
-  virtual void draw(libwpg::WPGPaintInterface *painter);
+  VSDCloseParagraphOutputElement();
+  virtual ~VSDCloseParagraphOutputElement() {}
+  virtual void draw(librevenge::RVNGDrawingInterface *painter);
   virtual VSDOutputElement *clone()
   {
-    return new VSDEndTextLineOutputElement();
+    return new VSDCloseParagraphOutputElement();
   }
 };
 
@@ -210,7 +291,7 @@ class VSDEndTextObjectOutputElement : public VSDOutputElement
 public:
   VSDEndTextObjectOutputElement();
   virtual ~VSDEndTextObjectOutputElement() {}
-  virtual void draw(libwpg::WPGPaintInterface *painter);
+  virtual void draw(librevenge::RVNGDrawingInterface *painter);
   virtual VSDOutputElement *clone()
   {
     return new VSDEndTextObjectOutputElement();
@@ -219,59 +300,59 @@ public:
 
 } // namespace libvisio
 
-libvisio::VSDStyleOutputElement::VSDStyleOutputElement(const WPXPropertyList &propList, const WPXPropertyListVector &propListVec) :
-  m_propList(propList), m_propListVec(propListVec) {}
-
-void libvisio::VSDStyleOutputElement::draw(libwpg::WPGPaintInterface *painter)
-{
-  if (painter)
-    painter->setStyle(m_propList, m_propListVec);
-}
-
-
-libvisio::VSDPathOutputElement::VSDPathOutputElement(const WPXPropertyListVector &propListVec) :
-  m_propListVec(propListVec) {}
-
-void libvisio::VSDPathOutputElement::draw(libwpg::WPGPaintInterface *painter)
-{
-  if (painter)
-    painter->drawPath(m_propListVec);
-}
-
-
-libvisio::VSDGraphicObjectOutputElement::VSDGraphicObjectOutputElement(const WPXPropertyList &propList, const ::WPXBinaryData &binaryData) :
-  m_propList(propList), m_binaryData(binaryData) {}
-
-void libvisio::VSDGraphicObjectOutputElement::draw(libwpg::WPGPaintInterface *painter)
-{
-  if (painter)
-    painter->drawGraphicObject(m_propList, m_binaryData);
-}
-
-
-libvisio::VSDStartTextObjectOutputElement::VSDStartTextObjectOutputElement(const WPXPropertyList &propList, const WPXPropertyListVector &propListVec) :
-  m_propList(propList), m_propListVec(propListVec) {}
-
-void libvisio::VSDStartTextObjectOutputElement::draw(libwpg::WPGPaintInterface *painter)
-{
-  if (painter)
-    painter->startTextObject(m_propList, m_propListVec);
-}
-
-libvisio::VSDStartTextSpanOutputElement::VSDStartTextSpanOutputElement(const WPXPropertyList &propList) :
+libvisio::VSDStyleOutputElement::VSDStyleOutputElement(const librevenge::RVNGPropertyList &propList) :
   m_propList(propList) {}
 
-void libvisio::VSDStartTextSpanOutputElement::draw(libwpg::WPGPaintInterface *painter)
+void libvisio::VSDStyleOutputElement::draw(librevenge::RVNGDrawingInterface *painter)
 {
   if (painter)
-    painter->startTextSpan(m_propList);
+    painter->setStyle(m_propList);
 }
 
 
-libvisio::VSDStartLayerOutputElement::VSDStartLayerOutputElement(const WPXPropertyList &propList) :
+libvisio::VSDPathOutputElement::VSDPathOutputElement(const librevenge::RVNGPropertyList &propList) :
   m_propList(propList) {}
 
-void libvisio::VSDStartLayerOutputElement::draw(libwpg::WPGPaintInterface *painter)
+void libvisio::VSDPathOutputElement::draw(librevenge::RVNGDrawingInterface *painter)
+{
+  if (painter)
+    painter->drawPath(m_propList);
+}
+
+
+libvisio::VSDGraphicObjectOutputElement::VSDGraphicObjectOutputElement(const librevenge::RVNGPropertyList &propList) :
+  m_propList(propList) {}
+
+void libvisio::VSDGraphicObjectOutputElement::draw(librevenge::RVNGDrawingInterface *painter)
+{
+  if (painter)
+    painter->drawGraphicObject(m_propList);
+}
+
+
+libvisio::VSDStartTextObjectOutputElement::VSDStartTextObjectOutputElement(const librevenge::RVNGPropertyList &propList) :
+  m_propList(propList) {}
+
+void libvisio::VSDStartTextObjectOutputElement::draw(librevenge::RVNGDrawingInterface *painter)
+{
+  if (painter)
+    painter->startTextObject(m_propList);
+}
+
+libvisio::VSDOpenSpanOutputElement::VSDOpenSpanOutputElement(const librevenge::RVNGPropertyList &propList) :
+  m_propList(propList) {}
+
+void libvisio::VSDOpenSpanOutputElement::draw(librevenge::RVNGDrawingInterface *painter)
+{
+  if (painter)
+    painter->openSpan(m_propList);
+}
+
+
+libvisio::VSDStartLayerOutputElement::VSDStartLayerOutputElement(const librevenge::RVNGPropertyList &propList) :
+  m_propList(propList) {}
+
+void libvisio::VSDStartLayerOutputElement::draw(librevenge::RVNGDrawingInterface *painter)
 {
   if (painter)
     painter->startLayer(m_propList);
@@ -280,53 +361,53 @@ void libvisio::VSDStartLayerOutputElement::draw(libwpg::WPGPaintInterface *paint
 
 libvisio::VSDEndLayerOutputElement::VSDEndLayerOutputElement() {}
 
-void libvisio::VSDEndLayerOutputElement::draw(libwpg::WPGPaintInterface *painter)
+void libvisio::VSDEndLayerOutputElement::draw(librevenge::RVNGDrawingInterface *painter)
 {
   if (painter)
     painter->endLayer();
 }
 
 
-libvisio::VSDStartTextLineOutputElement::VSDStartTextLineOutputElement(const WPXPropertyList &propList) :
+libvisio::VSDOpenParagraphOutputElement::VSDOpenParagraphOutputElement(const librevenge::RVNGPropertyList &propList) :
   m_propList(propList) {}
 
-void libvisio::VSDStartTextLineOutputElement::draw(libwpg::WPGPaintInterface *painter)
+void libvisio::VSDOpenParagraphOutputElement::draw(librevenge::RVNGDrawingInterface *painter)
 {
   if (painter)
-    painter->startTextLine(m_propList);
+    painter->openParagraph(m_propList);
 }
 
 
-libvisio::VSDInsertTextOutputElement::VSDInsertTextOutputElement(const WPXString &text) :
+libvisio::VSDInsertTextOutputElement::VSDInsertTextOutputElement(const librevenge::RVNGString &text) :
   m_text(text) {}
 
-void libvisio::VSDInsertTextOutputElement::draw(libwpg::WPGPaintInterface *painter)
+void libvisio::VSDInsertTextOutputElement::draw(librevenge::RVNGDrawingInterface *painter)
 {
   if (painter)
-    painter->insertText(m_text);
+    separateSpacesAndInsertText(painter, m_text);
 }
 
-libvisio::VSDEndTextSpanOutputElement::VSDEndTextSpanOutputElement() {}
+libvisio::VSDCloseSpanOutputElement::VSDCloseSpanOutputElement() {}
 
-void libvisio::VSDEndTextSpanOutputElement::draw(libwpg::WPGPaintInterface *painter)
+void libvisio::VSDCloseSpanOutputElement::draw(librevenge::RVNGDrawingInterface *painter)
 {
   if (painter)
-    painter->endTextSpan();
+    painter->closeSpan();
 }
 
 
-libvisio::VSDEndTextLineOutputElement::VSDEndTextLineOutputElement() {}
+libvisio::VSDCloseParagraphOutputElement::VSDCloseParagraphOutputElement() {}
 
-void libvisio::VSDEndTextLineOutputElement::draw(libwpg::WPGPaintInterface *painter)
+void libvisio::VSDCloseParagraphOutputElement::draw(librevenge::RVNGDrawingInterface *painter)
 {
   if (painter)
-    painter->endTextLine();
+    painter->closeParagraph();
 }
 
 
 libvisio::VSDEndTextObjectOutputElement::VSDEndTextObjectOutputElement() {}
 
-void libvisio::VSDEndTextObjectOutputElement::draw(libwpg::WPGPaintInterface *painter)
+void libvisio::VSDEndTextObjectOutputElement::draw(librevenge::RVNGDrawingInterface *painter)
 {
   if (painter)
     painter->endTextObject();
@@ -349,7 +430,7 @@ libvisio::VSDOutputElementList::VSDOutputElementList(const libvisio::VSDOutputEl
 libvisio::VSDOutputElementList &libvisio::VSDOutputElementList::operator=(const libvisio::VSDOutputElementList &elementList)
 {
   for (std::vector<VSDOutputElement *>::iterator iter = m_elements.begin(); iter != m_elements.end(); ++iter)
-    delete (*iter);
+    delete(*iter);
 
   m_elements.clear();
 
@@ -368,59 +449,59 @@ void libvisio::VSDOutputElementList::append(const libvisio::VSDOutputElementList
 libvisio::VSDOutputElementList::~VSDOutputElementList()
 {
   for (std::vector<VSDOutputElement *>::iterator iter = m_elements.begin(); iter != m_elements.end(); ++iter)
-    delete (*iter);
+    delete(*iter);
   m_elements.clear();
 }
 
-void libvisio::VSDOutputElementList::draw(libwpg::WPGPaintInterface *painter) const
+void libvisio::VSDOutputElementList::draw(librevenge::RVNGDrawingInterface *painter) const
 {
   for (std::vector<VSDOutputElement *>::const_iterator iter = m_elements.begin(); iter != m_elements.end(); ++iter)
     (*iter)->draw(painter);
 }
 
-void libvisio::VSDOutputElementList::addStyle(const WPXPropertyList &propList, const WPXPropertyListVector &propListVec)
+void libvisio::VSDOutputElementList::addStyle(const librevenge::RVNGPropertyList &propList)
 {
-  m_elements.push_back(new VSDStyleOutputElement(propList, propListVec));
+  m_elements.push_back(new VSDStyleOutputElement(propList));
 }
 
-void libvisio::VSDOutputElementList::addPath(const WPXPropertyListVector &propListVec)
+void libvisio::VSDOutputElementList::addPath(const librevenge::RVNGPropertyList &propList)
 {
-  m_elements.push_back(new VSDPathOutputElement(propListVec));
+  m_elements.push_back(new VSDPathOutputElement(propList));
 }
 
-void libvisio::VSDOutputElementList::addGraphicObject(const WPXPropertyList &propList, const ::WPXBinaryData &binaryData)
+void libvisio::VSDOutputElementList::addGraphicObject(const librevenge::RVNGPropertyList &propList)
 {
-  m_elements.push_back(new VSDGraphicObjectOutputElement(propList, binaryData));
+  m_elements.push_back(new VSDGraphicObjectOutputElement(propList));
 }
 
-void libvisio::VSDOutputElementList::addStartTextObject(const WPXPropertyList &propList, const WPXPropertyListVector &propListVec)
+void libvisio::VSDOutputElementList::addStartTextObject(const librevenge::RVNGPropertyList &propList)
 {
-  m_elements.push_back(new VSDStartTextObjectOutputElement(propList, propListVec));
+  m_elements.push_back(new VSDStartTextObjectOutputElement(propList));
 }
 
-void libvisio::VSDOutputElementList::addStartTextLine(const WPXPropertyList &propList)
+void libvisio::VSDOutputElementList::addOpenParagraph(const librevenge::RVNGPropertyList &propList)
 {
-  m_elements.push_back(new VSDStartTextLineOutputElement(propList));
+  m_elements.push_back(new VSDOpenParagraphOutputElement(propList));
 }
 
-void libvisio::VSDOutputElementList::addStartTextSpan(const WPXPropertyList &propList)
+void libvisio::VSDOutputElementList::addOpenSpan(const librevenge::RVNGPropertyList &propList)
 {
-  m_elements.push_back(new VSDStartTextSpanOutputElement(propList));
+  m_elements.push_back(new VSDOpenSpanOutputElement(propList));
 }
 
-void libvisio::VSDOutputElementList::addInsertText(const WPXString &text)
+void libvisio::VSDOutputElementList::addInsertText(const librevenge::RVNGString &text)
 {
   m_elements.push_back(new VSDInsertTextOutputElement(text));
 }
 
-void libvisio::VSDOutputElementList::addEndTextSpan()
+void libvisio::VSDOutputElementList::addCloseSpan()
 {
-  m_elements.push_back(new VSDEndTextSpanOutputElement());
+  m_elements.push_back(new VSDCloseSpanOutputElement());
 }
 
-void libvisio::VSDOutputElementList::addEndTextLine()
+void libvisio::VSDOutputElementList::addCloseParagraph()
 {
-  m_elements.push_back(new VSDEndTextLineOutputElement());
+  m_elements.push_back(new VSDCloseParagraphOutputElement());
 }
 
 void libvisio::VSDOutputElementList::addEndTextObject()
@@ -428,7 +509,7 @@ void libvisio::VSDOutputElementList::addEndTextObject()
   m_elements.push_back(new VSDEndTextObjectOutputElement());
 }
 
-void libvisio::VSDOutputElementList::addStartLayer(const WPXPropertyList &propList)
+void libvisio::VSDOutputElementList::addStartLayer(const librevenge::RVNGPropertyList &propList)
 {
   m_elements.push_back(new VSDStartLayerOutputElement(propList));
 }

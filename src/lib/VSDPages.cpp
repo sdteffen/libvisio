@@ -68,7 +68,7 @@ void libvisio::VSDPage::append(const libvisio::VSDOutputElementList &outputEleme
   m_pageElements.append(outputElements);
 }
 
-void libvisio::VSDPage::draw(libwpg::WPGPaintInterface *painter) const
+void libvisio::VSDPage::draw(librevenge::RVNGDrawingInterface *painter) const
 {
   if (painter)
     m_pageElements.draw(painter);
@@ -89,38 +89,44 @@ void libvisio::VSDPages::addBackgroundPage(const libvisio::VSDPage &page)
   m_backgroundPages[page.m_currentPageID] = page;
 }
 
-void libvisio::VSDPages::draw(libwpg::WPGPaintInterface *painter)
+void libvisio::VSDPages::draw(librevenge::RVNGDrawingInterface *painter)
 {
   if (!painter)
     return;
+  if (m_pages.empty())
+    return;
+
+  painter->startDocument(librevenge::RVNGPropertyList());
 
   for (unsigned i = 0; i < m_pages.size(); ++i)
   {
-    WPXPropertyList pageProps;
+    librevenge::RVNGPropertyList pageProps;
     pageProps.insert("svg:width", m_pages[i].m_pageWidth);
     pageProps.insert("svg:height", m_pages[i].m_pageHeight);
     if (m_pages[i].m_pageName.len())
       pageProps.insert("draw:name", m_pages[i].m_pageName);
-    painter->startGraphics(pageProps);
+    painter->startPage(pageProps);
     _drawWithBackground(painter, m_pages[i]);
-    painter->endGraphics();
+    painter->endPage();
   }
   // Visio shows background pages in tabs after the normal pages
   for (std::map<unsigned, libvisio::VSDPage>::const_iterator iter = m_backgroundPages.begin();
        iter != m_backgroundPages.end(); ++iter)
   {
-    WPXPropertyList pageProps;
+    librevenge::RVNGPropertyList pageProps;
     pageProps.insert("svg:width", iter->second.m_pageWidth);
     pageProps.insert("svg:height", iter->second.m_pageHeight);
     if (iter->second.m_pageName.len())
       pageProps.insert("draw:name", iter->second.m_pageName);
-    painter->startGraphics(pageProps);
+    painter->startPage(pageProps);
     _drawWithBackground(painter, iter->second);
-    painter->endGraphics();
+    painter->endPage();
   }
+
+  painter->endDocument();
 }
 
-void libvisio::VSDPages::_drawWithBackground(libwpg::WPGPaintInterface *painter, const libvisio::VSDPage &page)
+void libvisio::VSDPages::_drawWithBackground(librevenge::RVNGDrawingInterface *painter, const libvisio::VSDPage &page)
 {
   if (!painter)
     return;
