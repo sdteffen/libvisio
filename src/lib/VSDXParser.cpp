@@ -1,30 +1,10 @@
 /* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* libvisio
- * Version: MPL 1.1 / GPLv2+ / LGPLv2+
+/*
+ * This file is part of the libvisio project.
  *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License or as specified alternatively below. You may obtain a copy of
- * the License at http://www.mozilla.org/MPL/
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- *
- * Major Contributor(s):
- * Copyright (C) 2012 Fridrich Strba <fridrich.strba@bluewin.ch>
- *
- *
- * All Rights Reserved.
- *
- * For minor contributions see the git repository.
- *
- * Alternatively, the contents of this file may be used under the terms of
- * either the GNU General Public License Version 2 or later (the "GPLv2+"), or
- * the GNU Lesser General Public License Version 2 or later (the "LGPLv2+"),
- * in which case the provisions of the GPLv2+ or the LGPLv2+ are applicable
- * instead of those above.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
 #include <string.h>
@@ -841,6 +821,37 @@ void libvisio::VSDXParser::readStyleProperties(xmlTextReaderPtr reader)
       if (XML_READER_TYPE_ELEMENT == tokenType)
         readCharacter(reader);
       break;
+    case XML_QUICKSTYLELINECOLOR:
+      if (XML_READER_TYPE_ELEMENT == tokenType)
+      {
+        long tmpValue;
+        ret = readLongData(tmpValue, reader);
+        if (!strokeColour)
+          strokeColour = m_currentTheme.getThemeColour((unsigned)tmpValue);
+      }
+      break;
+    case XML_QUICKSTYLEFILLCOLOR:
+      if (XML_READER_TYPE_ELEMENT == tokenType)
+      {
+        long tmpValue;
+        ret = readLongData(tmpValue, reader);
+        if (!fillColourFG)
+          fillColourFG = m_currentTheme.getThemeColour((unsigned)tmpValue);
+        if (!fillColourBG)
+          fillColourBG = m_currentTheme.getThemeColour((unsigned)tmpValue);
+      }
+      break;
+    case XML_QUICKSTYLESHADOWCOLOR:
+      if (XML_READER_TYPE_ELEMENT == tokenType)
+      {
+        long tmpValue;
+        ret = readLongData(tmpValue, reader);
+        if (!shadowColourFG)
+          shadowColourFG = m_currentTheme.getThemeColour((unsigned)tmpValue);
+        if (!shadowColourBG)
+          shadowColourBG = m_currentTheme.getThemeColour((unsigned)tmpValue);
+      }
+      break;
     default:
       break;
     }
@@ -1158,6 +1169,35 @@ void libvisio::VSDXParser::readShapeProperties(xmlTextReaderPtr reader)
     case XML_HIDETEXT:
       if (XML_READER_TYPE_ELEMENT == tokenType)
         ret = readBoolData(m_shape.m_misc.m_hideText, reader);
+      break;
+    case XML_QUICKSTYLELINECOLOR:
+      if (XML_READER_TYPE_ELEMENT == tokenType)
+      {
+        long tmpValue;
+        ret = readLongData(tmpValue, reader);
+        if (!m_shape.m_lineStyle.colour)
+          m_shape.m_lineStyle.colour = m_currentTheme.getThemeColour((unsigned)tmpValue);
+      }
+      break;
+    case XML_QUICKSTYLEFILLCOLOR:
+      if (XML_READER_TYPE_ELEMENT == tokenType)
+      {
+        long tmpValue;
+        ret = readLongData(tmpValue, reader);
+        if (!m_shape.m_fillStyle.fgColour)
+          m_shape.m_fillStyle.fgColour = m_currentTheme.getThemeColour((unsigned)tmpValue);
+        if (!m_shape.m_fillStyle.bgColour)
+          m_shape.m_fillStyle.bgColour = m_currentTheme.getThemeColour((unsigned)tmpValue);
+      }
+      break;
+    case XML_QUICKSTYLESHADOWCOLOR:
+      if (XML_READER_TYPE_ELEMENT == tokenType)
+      {
+        long tmpValue;
+        ret = readLongData(tmpValue, reader);
+        if (!m_shape.m_fillStyle.shadowFgColour)
+          m_shape.m_fillStyle.shadowFgColour = m_currentTheme.getThemeColour((unsigned)tmpValue);
+      }
       break;
     default:
       if (XML_SECTION == tokenClass && XML_READER_TYPE_ELEMENT == tokenType)

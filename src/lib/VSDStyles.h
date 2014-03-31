@@ -1,31 +1,10 @@
 /* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* libvisio
- * Version: MPL 1.1 / GPLv2+ / LGPLv2+
+/*
+ * This file is part of the libvisio project.
  *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License or as specified alternatively below. You may obtain a copy of
- * the License at http://www.mozilla.org/MPL/
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- *
- * Major Contributor(s):
- * Copyright (C) 2011 Fridrich Strba <fridrich.strba@bluewin.ch>
- * Copyright (C) 2011 Eilidh McAdam <tibbylickle@gmail.com>
- *
- *
- * All Rights Reserved.
- *
- * For minor contributions see the git repository.
- *
- * Alternatively, the contents of this file may be used under the terms of
- * either the GNU General Public License Version 2 or later (the "GPLv2+"), or
- * the GNU Lesser General Public License Version 2 or later (the "LGPLv2+"),
- * in which case the provisions of the GPLv2+ or the LGPLv2+ are applicable
- * instead of those above.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
 #ifndef __VSDSTYLES_H__
@@ -38,6 +17,55 @@
 
 namespace libvisio
 {
+
+struct VSDOptionalThemeReference
+{
+  VSDOptionalThemeReference() :
+    qsLineColour(), qsFillColour(), qsShadowColour(), qsFontColour() {}
+  VSDOptionalThemeReference(const boost::optional<long> &lineColour, const boost::optional<long> &fillColour,
+                            const boost::optional<long> &shadowColour, const boost::optional<long> &fontColour) :
+    qsLineColour(lineColour), qsFillColour(fillColour), qsShadowColour(shadowColour), qsFontColour(fontColour) {}
+  VSDOptionalThemeReference(const VSDOptionalThemeReference &themeRef) :
+    qsLineColour(themeRef.qsLineColour), qsFillColour(themeRef.qsFillColour),
+    qsShadowColour(themeRef.qsShadowColour), qsFontColour(themeRef.qsFontColour) {}
+  ~VSDOptionalThemeReference() {}
+  void override(const VSDOptionalThemeReference &themeRef)
+  {
+    ASSIGN_OPTIONAL(themeRef.qsLineColour, qsLineColour);
+    ASSIGN_OPTIONAL(themeRef.qsFillColour, qsFillColour);
+    ASSIGN_OPTIONAL(themeRef.qsShadowColour, qsShadowColour);
+    ASSIGN_OPTIONAL(themeRef.qsFontColour, qsFontColour);
+  }
+
+  boost::optional<long> qsLineColour;
+  boost::optional<long> qsFillColour;
+  boost::optional<long> qsShadowColour;
+  boost::optional<long> qsFontColour;
+};
+
+struct VSDThemeReference
+{
+  VSDThemeReference() :
+    qsLineColour(-1), qsFillColour(-1), qsShadowColour(-1), qsFontColour(-1) {}
+  VSDThemeReference(long lineColour, long fillColour, long shadowColour, long fontColour) :
+    qsLineColour(lineColour), qsFillColour(fillColour), qsShadowColour(shadowColour), qsFontColour(fontColour) {}
+  VSDThemeReference(const VSDThemeReference &themeRef) :
+    qsLineColour(themeRef.qsLineColour), qsFillColour(themeRef.qsFillColour),
+    qsShadowColour(themeRef.qsShadowColour), qsFontColour(themeRef.qsFontColour) {}
+  ~VSDThemeReference() {}
+  void override(const VSDOptionalThemeReference &themeRef)
+  {
+    ASSIGN_OPTIONAL(themeRef.qsLineColour, qsLineColour);
+    ASSIGN_OPTIONAL(themeRef.qsFillColour, qsFillColour);
+    ASSIGN_OPTIONAL(themeRef.qsShadowColour, qsShadowColour);
+    ASSIGN_OPTIONAL(themeRef.qsFontColour, qsFontColour);
+  }
+
+  long qsLineColour;
+  long qsFillColour;
+  long qsShadowColour;
+  long qsFontColour;
+};
 
 struct VSDOptionalLineStyle
 {
@@ -444,6 +472,7 @@ public:
   void addTextBlockStyle(unsigned textStyleIndex, const VSDOptionalTextBlockStyle &textBlockStyle);
   void addCharStyle(unsigned textStyleIndex, const VSDOptionalCharStyle &charStyle);
   void addParaStyle(unsigned textStyleIndex, const VSDOptionalParaStyle &paraStyle);
+  void addStyleThemeReference(unsigned styleIndex, const VSDOptionalThemeReference &themeRef);
 
   void addLineStyleMaster(unsigned lineStyleIndex, unsigned lineStyleMaster);
   void addFillStyleMaster(unsigned fillStyleIndex, unsigned fillStyleMaster);
@@ -455,6 +484,7 @@ public:
   VSDOptionalTextBlockStyle getOptionalTextBlockStyle(unsigned textStyleIndex) const;
   VSDOptionalCharStyle getOptionalCharStyle(unsigned textStyleIndex) const;
   VSDOptionalParaStyle getOptionalParaStyle(unsigned textStyleIndex) const;
+  VSDOptionalThemeReference getOptionalThemeReference(unsigned styleIndex) const;
 
 private:
   std::map<unsigned, VSDOptionalLineStyle> m_lineStyles;
@@ -462,6 +492,7 @@ private:
   std::map<unsigned, VSDOptionalTextBlockStyle> m_textBlockStyles;
   std::map<unsigned, VSDOptionalCharStyle> m_charStyles;
   std::map<unsigned, VSDOptionalParaStyle> m_paraStyles;
+  std::map<unsigned, VSDOptionalThemeReference> m_themeRefs;
   std::map<unsigned, unsigned> m_lineStyleMasters;
   std::map<unsigned, unsigned> m_fillStyleMasters;
   std::map<unsigned, unsigned> m_textStyleMasters;

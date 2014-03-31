@@ -1,30 +1,10 @@
 /* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* libvisio
- * Version: MPL 1.1 / GPLv2+ / LGPLv2+
+/*
+ * This file is part of the libvisio project.
  *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License or as specified alternatively below. You may obtain a copy of
- * the License at http://www.mozilla.org/MPL/
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- *
- * Major Contributor(s):
- * Copyright (C) 2013 Fridrich Strba <fridrich.strba@bluewin.ch>
- *
- *
- * All Rights Reserved.
- *
- * For minor contributions see the git repository.
- *
- * Alternatively, the contents of this file may be used under the terms of
- * either the GNU General Public License Version 2 or later (the "GPLv2+"), or
- * the GNU Lesser General Public License Version 2 or later (the "LGPLv2+"),
- * in which case the provisions of the GPLv2+ or the LGPLv2+ are applicable
- * instead of those above.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
 #include "VSDXTheme.h"
@@ -55,6 +35,7 @@ libvisio::VSDXClrScheme::VSDXClrScheme()
   , m_accent6()
   , m_hlink()
   , m_folHlink()
+  , m_bkgnd()
   , m_variationClrSchemeLst()
 {
 }
@@ -169,7 +150,7 @@ void libvisio::VSDXTheme::readClrScheme(xmlTextReaderPtr reader)
     tokenType = xmlTextReaderNodeType(reader);
     switch (tokenId)
     {
-    case XML_A_SRGBCLR:
+    case XML_A_DK1:
       readThemeColour(reader, tokenId, m_clrScheme.m_dk1);
       break;
     case XML_A_DK2:
@@ -204,6 +185,9 @@ void libvisio::VSDXTheme::readClrScheme(xmlTextReaderPtr reader)
       break;
     case XML_A_FOLHLINK:
       readThemeColour(reader, tokenId, m_clrScheme.m_folHlink);
+      break;
+    case XML_VT_BKGND:
+      readThemeColour(reader, tokenId, m_clrScheme.m_bkgnd);
       break;
     case XML_VT_VARIATIONCLRSCHEMELST:
       readVariationClrSchemeLst(reader);
@@ -264,7 +248,7 @@ void libvisio::VSDXTheme::readVariationClrSchemeLst(xmlTextReaderPtr reader)
     tokenType = xmlTextReaderNodeType(reader);
     switch (tokenId)
     {
-    case XML_VT_VARIATIONSTYLESCHEME:
+    case XML_VT_VARIATIONCLRSCHEME:
     {
       VSDXVariationClrScheme varClrSch;
       readVariationClrScheme(reader, varClrSch);
@@ -275,7 +259,7 @@ void libvisio::VSDXTheme::readVariationClrSchemeLst(xmlTextReaderPtr reader)
       break;
     }
   }
-  while ((XML_VT_VARIATIONSTYLESCHEMELST != tokenId || XML_READER_TYPE_END_ELEMENT != tokenType) && 1 == ret);
+  while ((XML_VT_VARIATIONCLRSCHEMELST != tokenId || XML_READER_TYPE_END_ELEMENT != tokenType) && 1 == ret);
 }
 
 void libvisio::VSDXTheme::readVariationClrScheme(xmlTextReaderPtr reader, VSDXVariationClrScheme &varClrSch)
@@ -319,7 +303,62 @@ void libvisio::VSDXTheme::readVariationClrScheme(xmlTextReaderPtr reader, VSDXVa
       break;
     }
   }
-  while ((XML_VT_VARIATIONSTYLESCHEME != tokenId || XML_READER_TYPE_END_ELEMENT != tokenType) && 1 == ret);
+  while ((XML_VT_VARIATIONCLRSCHEME != tokenId || XML_READER_TYPE_END_ELEMENT != tokenType) && 1 == ret);
+}
+
+boost::optional<libvisio::Colour> libvisio::VSDXTheme::getThemeColour(unsigned value, unsigned variationIndex) const
+{
+  if (value < 100)
+  {
+    switch (value)
+    {
+    case 0:
+      return m_clrScheme.m_dk1;
+    case 1:
+      return m_clrScheme.m_lt1;
+    case 2:
+      return m_clrScheme.m_accent1;
+    case 3:
+      return m_clrScheme.m_accent2;
+    case 4:
+      return m_clrScheme.m_accent3;
+    case 5:
+      return m_clrScheme.m_accent4;
+    case 6:
+      return m_clrScheme.m_accent5;
+    case 7:
+      return m_clrScheme.m_accent6;
+    case 8:
+      return m_clrScheme.m_bkgnd;
+    default:
+      break;
+    }
+  }
+  else if (!m_clrScheme.m_variationClrSchemeLst.empty())
+  {
+    if (variationIndex >= m_clrScheme.m_variationClrSchemeLst.size())
+      variationIndex = 0;
+    switch (value)
+    {
+    case 100:
+      return m_clrScheme.m_variationClrSchemeLst[variationIndex].m_varColor1;
+    case 101:
+      return m_clrScheme.m_variationClrSchemeLst[variationIndex].m_varColor2;
+    case 102:
+      return m_clrScheme.m_variationClrSchemeLst[variationIndex].m_varColor3;
+    case 103:
+      return m_clrScheme.m_variationClrSchemeLst[variationIndex].m_varColor4;
+    case 104:
+      return m_clrScheme.m_variationClrSchemeLst[variationIndex].m_varColor5;
+    case 105:
+      return m_clrScheme.m_variationClrSchemeLst[variationIndex].m_varColor6;
+    case 106:
+      return m_clrScheme.m_variationClrSchemeLst[variationIndex].m_varColor7;
+    default:
+      break;
+    }
+  }
+  return boost::optional<libvisio::Colour>();
 }
 
 /* vim:set shiftwidth=2 softtabstop=2 expandtab: */

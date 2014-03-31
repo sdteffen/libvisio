@@ -1,31 +1,10 @@
 /* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* libvisio
- * Version: MPL 1.1 / GPLv2+ / LGPLv2+
+/*
+ * This file is part of the libvisio project.
  *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License or as specified alternatively below. You may obtain a copy of
- * the License at http://www.mozilla.org/MPL/
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- *
- * Major Contributor(s):
- * Copyright (C) 2011 Fridrich Strba <fridrich.strba@bluewin.ch>
- * Copyright (C) 2011 Eilidh McAdam <tibbylickle@gmail.com>
- *
- *
- * All Rights Reserved.
- *
- * For minor contributions see the git repository.
- *
- * Alternatively, the contents of this file may be used under the terms of
- * either the GNU General Public License Version 2 or later (the "GPLv2+"), or
- * the GNU Lesser General Public License Version 2 or later (the "LGPLv2+"),
- * in which case the provisions of the GPLv2+ or the LGPLv2+ are applicable
- * instead of those above.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
 #ifndef VSDCONTENTCOLLECTOR_H
@@ -79,6 +58,8 @@ public:
                             const boost::optional<unsigned char> &fillPattern, const boost::optional<double> &fillFGTransparency,
                             const boost::optional<double> &fillBGTransparency, const boost::optional<unsigned char> &shadowPattern,
                             const boost::optional<Colour> &shfgc);
+  void collectThemeReference(unsigned level, const boost::optional<long> &lineColour, const boost::optional<long> &fillColour,
+                             const boost::optional<long> &shadowColour, const boost::optional<long> &fontColour);
   void collectGeometry(unsigned id, unsigned level, bool noFill, bool noLine, bool noShow);
   void collectMoveTo(unsigned id, unsigned level, double x, double y);
   void collectLineTo(unsigned id, unsigned level, double x, double y);
@@ -171,6 +152,9 @@ public:
                              const boost::optional<unsigned char> &verticalAlign, const boost::optional<bool> &isBgFilled,
                              const boost::optional<Colour> &bgColour, const boost::optional<double> &defaultTabStop,
                              const boost::optional<unsigned char> &textDirection);
+  void collectStyleThemeReference(unsigned level, const boost::optional<long> &lineColour, const boost::optional<long> &fillColour,
+                                  const boost::optional<long> &shadowColour, const boost::optional<long> &fontColour);
+
 
   // Field list
   void collectFieldList(unsigned id, unsigned level);
@@ -286,6 +270,8 @@ private:
   VSDLineStyle m_lineStyle;
   VSDFillStyle m_fillStyle;
   VSDTextBlockStyle m_textBlockStyle;
+
+  VSDThemeReference m_themeReference;
 
   VSDCharStyle m_defaultCharStyle;
   VSDParaStyle m_defaultParaStyle;

@@ -1,31 +1,10 @@
 /* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* libvisio
- * Version: MPL 1.1 / GPLv2+ / LGPLv2+
+/*
+ * This file is part of the libvisio project.
  *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License or as specified alternatively below. You may obtain a copy of
- * the License at http://www.mozilla.org/MPL/
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- *
- * Major Contributor(s):
- * Copyright (C) 2011 Fridrich Strba <fridrich.strba@bluewin.ch>
- * Copyright (C) 2011 Eilidh McAdam <tibbylickle@gmail.com>
- *
- *
- * All Rights Reserved.
- *
- * For minor contributions see the git repository.
- *
- * Alternatively, the contents of this file may be used under the terms of
- * either the GNU General Public License Version 2 or later (the "GPLv2+"), or
- * the GNU Lesser General Public License Version 2 or later (the "LGPLv2+"),
- * in which case the provisions of the GPLv2+ or the LGPLv2+ are applicable
- * instead of those above.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
 #include <string.h> // for memcpy
@@ -96,8 +75,8 @@ libvisio::VSDContentCollector::VSDContentCollector(
   m_pageOutputDrawing(), m_pageOutputText(), m_documentPageShapeOrders(documentPageShapeOrders),
   m_pageShapeOrder(m_documentPageShapeOrders.begin()), m_isFirstGeometry(true), m_NURBSData(), m_polylineData(),
   m_textStream(), m_names(), m_stencilNames(), m_fields(), m_stencilFields(), m_fieldIndex(0),
-  m_textFormat(VSD_TEXT_ANSI), m_charFormats(), m_paraFormats(), m_lineStyle(), m_fillStyle(),
-  m_textBlockStyle(), m_defaultCharStyle(), m_defaultParaStyle(), m_currentStyleSheet(0), m_styles(styles),
+  m_textFormat(VSD_TEXT_ANSI), m_charFormats(), m_paraFormats(), m_lineStyle(), m_fillStyle(), m_textBlockStyle(),
+  m_themeReference(), m_defaultCharStyle(), m_defaultParaStyle(), m_currentStyleSheet(0), m_styles(styles),
   m_stencils(stencils), m_stencilShape(0), m_isStencilStarted(false), m_currentGeometryCount(0),
   m_backgroundPageID(MINUS_ONE), m_currentPageID(0), m_currentPage(), m_pages(),
   m_splineControlPoints(), m_splineKnotVector(), m_splineX(0.0), m_splineY(0.0),
@@ -1074,10 +1053,18 @@ void libvisio::VSDContentCollector::collectFillAndShadow(unsigned level, const b
 }
 
 void libvisio::VSDContentCollector::collectFillAndShadow(unsigned level, const boost::optional<Colour> &colourFG, const boost::optional<Colour> &colourBG,
-                                                         const boost::optional<unsigned char> &fillPattern, const boost::optional<double> &fillFGTransparency, const boost::optional<double> &fillBGTransparency,
+                                                         const boost::optional<unsigned char> &fillPattern, const boost::optional<double> &fillFGTransparency,
+                                                         const boost::optional<double> &fillBGTransparency,
                                                          const boost::optional<unsigned char> &shadowPattern, const boost::optional<Colour> &shfgc)
 {
   collectFillAndShadow(level, colourFG, colourBG, fillPattern, fillFGTransparency, fillBGTransparency, shadowPattern, shfgc, m_shadowOffsetX, m_shadowOffsetY);
+}
+
+void libvisio::VSDContentCollector::collectThemeReference(unsigned level, const boost::optional<long> &lineColour, const boost::optional<long> &fillColour,
+                                                          const boost::optional<long> &shadowColour, const boost::optional<long> &fontColour)
+{
+  _handleLevelChange(level);
+  m_themeReference.override(VSDOptionalThemeReference(lineColour, fillColour, shadowColour, fontColour));
 }
 
 void libvisio::VSDContentCollector::collectForeignData(unsigned level, const librevenge::RVNGBinaryData &binaryData)
@@ -2631,6 +2618,15 @@ void libvisio::VSDContentCollector::_fillAndShadowProperties(const VSDFillStyle 
     styleProps.insert("draw:shadow-opacity",(double)(1 - style.shadowFgColour.a/255.), librevenge::RVNG_PERCENT);
   }
 }
+
+void libvisio::VSDContentCollector::collectStyleThemeReference(unsigned /* level */, const boost::optional<long> &lineColour,
+                                                               const boost::optional<long> &fillColour, const boost::optional<long> &shadowColour,
+                                                               const boost::optional<long> &fontColour)
+{
+  VSDOptionalThemeReference themeReference(lineColour, fillColour, shadowColour, fontColour);
+  m_styles.addStyleThemeReference(m_currentStyleSheet, themeReference);
+}
+
 
 void libvisio::VSDContentCollector::collectFieldList(unsigned /* id */, unsigned level)
 {
